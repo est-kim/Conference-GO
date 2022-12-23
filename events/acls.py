@@ -20,18 +20,34 @@ def get_photo(city, state):
         return {"picture_url": None}
 
 
-def get_coordinates(lat, lon):
-    url = f"http://api.openweathermap.org/geo/1.0/direct?q={city},{state},US&limit=3&appid={OPEN_WEATHER_API_KEY}"
-    response = requests.get(url)
-    lat = response.json()[0]["lat"]
-    lon = response.json()[0]["lon"]
-    return {
-        "lat": lat,
-        "lon": lon
-    }
-
-
 def get_weather_data(city, state):
-    url = f"http://api.openweathermap.org/geo/1.0/direct?q={city},{state},US&limit=3&appid={OPEN_WEATHER_API_KEY}"
-    response = requests.get(url)
-    return
+    params = {
+        "q": f"{city}, {state}, US",
+        "appid": OPEN_WEATHER_API_KEY,
+        "limit": 1
+    }
+    url = "http://api.openweathermap.org/geo/1.0/direct"
+    response = requests.get(url, params=params)
+    content = json.loads(response.content)
+    try:
+        lat = content[0]["lat"]
+        lon = content[0]["lon"]
+    except (IndexError, KeyError):
+        return "Invalid location name"
+
+    params = {
+        "lat": lat,
+        "lon": lon,
+        "appid": OPEN_WEATHER_API_KEY,
+        "units": "imperial"
+    }
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    response = requests.get(url, params=params)
+    content = json.loads(response.content)
+    try:
+        return {
+                "temp": content["main"]["temp"],
+                "description": content["weather"][0]["description"]
+            }
+    except (IndexError, KeyError):
+        return "No data here"
